@@ -13,13 +13,23 @@ import {
   PermissionsAndroid,
   FlatList,
   TouchableHighlight,
+  Alert,
 } from 'react-native';
 import Buffer from 'buffer';
-
 import BleManager, {Peripheral} from 'react-native-ble-manager';
+import Modal from 'react-native-modal';
 
 interface IPeripheral extends Peripheral {
   isConnected?: boolean;
+}
+
+interface IPeripheralInfo {
+  id: string;
+  characteristics: {
+    service: string;
+    characteristic: string;
+    properties: string[];
+  }[];
 }
 
 const BleManagerModule = NativeModules.BleManager;
@@ -27,7 +37,11 @@ const bleManagerEmitter = new NativeEventEmitter(BleManagerModule);
 
 const App = () => {
   const [isScanning, setIsScanning] = useState(false);
+  const [isOpenModal, setIsOpenModal] = useState(false);
   const [peripherals, setPeripherals] = useState<IPeripheral[]>([]);
+  const [peripheralsInfo, setPeripheralsInfo] = useState<
+    IPeripheralInfo | undefined
+  >(undefined);
 
   const handleStartScan = useCallback(() => {
     if (!isScanning) {
@@ -48,66 +62,115 @@ const App = () => {
     });
   }, []);
 
-  const handlePeripheral = useCallback(
-    async (peripheral: IPeripheral) => {
-      if (peripheral) {
-        if (peripheral.isConnected) {
-          try {
-            await BleManager.disconnect(peripheral.id);
-            handleStartScan();
-          } finally {
-            return;
-          }
-        }
-
-        try {
-          await BleManager.connect(peripheral.id);
-
-          setPeripherals((oldState) => {
-            const peripheralConnected = {
-              ...peripheral,
-              isConnected: true,
-            };
-            const peripheralsDisconnected = oldState.filter((item) => {
-              if (item.id !== peripheral.id) {
-                return item;
-              }
-            });
-
-            return [peripheralConnected, ...peripheralsDisconnected];
-          });
-        } catch (err) {
-          console.log('Connect error:', err);
-
-          return;
-        }
-
+  const handlePeripheral = useCallback(async (peripheral: IPeripheral) => {
+    if (peripheral) {
+      if (peripheral.isConnected) {
         try {
           const peripheralData = await BleManager.retrieveServices(
             peripheral.id,
           );
 
-          console.log(
-            'Retrieved peripheral services:',
-            JSON.stringify(peripheralData),
+          const characteristics = peripheralData.characteristics?.map(
+            (item) => {
+              return {
+                service: item.service,
+                characteristic: item.characteristic,
+                properties: Object.keys(item.properties),
+              };
+            },
           );
 
-          // READ THE BATTERY AT MI BAND 5
-          const readData = await BleManager.read(
-            String(peripheral.id),
-            'fee0',
-            '00000006-0000-3512-2118-0009af100700',
-          );
+          if (Array.isArray(characteristics)) {
+            setPeripheralsInfo({
+              id: peripheralData.id,
+              characteristics: characteristics,
+            });
+            setIsOpenModal(true);
+          }
 
-          const buffer = Buffer.Buffer.from(readData); //https://github.com/feross/buffer#convert-arraybuffer-to-buffer
-          const sensorData = buffer.readUInt8(1);
-          console.log('Read: ' + sensorData);
-        } catch (err) {
-          console.log('Read error:', err);
+          // console.log(
+          //   'Retrieved peripheral services:',
+          //   JSON.stringify(peripheralData.characteristics),
+          // );
+
+          // await BleManager.disconnect(peripheral.id);
+          // handleStartScan();
+        } finally {
+          return;
         }
       }
+
+      try {
+        await BleManager.connect(peripheral.id);
+
+        setPeripherals((oldState) => {
+          const peripheralConnected = {
+            ...peripheral,
+            isConnected: true,
+          };
+          const peripheralsDisconnected = oldState.filter((item) => {
+            if (item.id !== peripheral.id) {
+              return item;
+            }
+          });
+
+          return [peripheralConnected, ...peripheralsDisconnected];
+        });
+      } catch (err) {
+        console.log('Connect error:', err);
+
+        return;
+      }
+
+      // try {
+      //   const peripheralData = await BleManager.retrieveServices(peripheral.id);
+
+      //   console.log(
+      //     'Retrieved peripheral services:',
+      //     JSON.stringify(peripheralData),
+      //   );
+
+      //   // READ THE BATTERY AT MI BAND 5
+      //   const readData = await BleManager.read(
+      //     String(peripheral.id),
+      //     'fee0',
+      //     '00000006-0000-3512-2118-0009af100700',
+      //   );
+
+      //   const buffer = Buffer.Buffer.from(readData); //https://github.com/feross/buffer#convert-arraybuffer-to-buffer
+      //   const sensorData = buffer.readUInt8(1);
+      //   console.log('Read: ' + sensorData);
+      // } catch (err) {
+      //   console.log('Read error:', err);
+      // }
+    }
+  }, []);
+
+  const handleRead = useCallback(
+    async (id: string, service: string, characteristic: string) => {
+      try {
+        const peripheralData = await BleManager.retrieveServices(id);
+
+        console.log(
+          'Retrieved peripheral services:',
+          JSON.stringify(peripheralData),
+        );
+
+        // READ THE BATTERY AT MI BAND 5
+        const readData = await BleManager.read(id, service, characteristic);
+
+        const buffer = Buffer.Buffer.from(readData); //https://github.com/feross/buffer#convert-arraybuffer-to-buffer
+        const sensorData = buffer.readUInt8(1);
+        console.log('Read: ' + sensorData);
+
+        Alert.alert('Success', String(sensorData));
+      } catch (err) {
+        console.log('Read error:', err);
+
+        Alert.alert('Error', String(err));
+      }
     },
-    [handleStartScan],
+    [],
   );
 
   useEffect(() => {
@@ -209,21 +272,21 @@ const App = () => {
                   }>
                   <Text
                     style={[
-                      styles.peripheralName,
+                      styles.textLarge,
                       item.isConnected && styles.colorWhite,
                     ]}>
                     {item.name}
                   </Text>
                   <Text
                     style={[
-                      styles.peripheralRssi,
+                      styles.textMedium,
                       item.isConnected && styles.colorWhite,
                     ]}>
                     RSSI: {item.rssi}
                   </Text>
                   <Text
                     style={[
-                      styles.peripheralId,
+                      styles.textSmall,
                       item.isConnected && styles.colorWhite,
                     ]}>
                     {item.id}
@@ -234,6 +297,54 @@ const App = () => {
           }}
         />
       </SafeAreaView>
+
+      <Modal
+        isVisible={isOpenModal}
+        onBackButtonPress={() => setIsOpenModal(false)}>
+        <Button title="close" onPress={() => setIsOpenModal(false)} />
+
+        <View style={{flex: 1, backgroundColor: '#fff', paddingHorizontal: 10}}>
+          {peripheralsInfo && (
+            <FlatList
+              data={peripheralsInfo.characteristics}
+              keyExtractor={(_, index) => String(index)}
+              ItemSeparatorComponent={() => (
+                <View
+                  style={{
+                    marginVertical: 12,
+                    borderWidth: 1,
+                    borderColor: '#eee',
+                  }}
+                />
+              )}
+              renderItem={({item}) => {
+                return (
+                  <TouchableHighlight
+                    onPress={() =>
+                      handleRead(
+                        peripheralsInfo.id,
+                        item.service,
+                        item.characteristic,
+                      )
+                    }>
+                    <View style={styles.backgroundWhite}>
+                      <Text style={styles.textLarge}>
+                        SERVICE: {item.service}
+                      </Text>
+                      <Text style={styles.textLarge}>
+                        CHARACTERISTIC: {item.characteristic}
+                      </Text>
+                      <Text style={styles.textMedium}>
+                        PROPERTIES: {`${item.properties}`}
+                      </Text>
+                    </View>
+                  </TouchableHighlight>
+                );
+              }}
+            />
+          )}
+        </View>
+      </Modal>
     </>
   );
 };
@@ -255,19 +366,19 @@ const styles = StyleSheet.create({
   voidListText: {
     textAlign: 'center',
   },
-  peripheralName: {
+  textLarge: {
     fontSize: 12,
     textAlign: 'center',
     color: '#333333',
     padding: 10,
   },
-  peripheralRssi: {
+  textMedium: {
     fontSize: 10,
     textAlign: 'center',
     color: '#333333',
     padding: 2,
   },
-  peripheralId: {
+  textSmall: {
     fontSize: 8,
     textAlign: 'center',
     color: '#333333',
