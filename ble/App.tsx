@@ -38,6 +38,7 @@ const bleManagerEmitter = new NativeEventEmitter(BleManagerModule);
 const App = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [isOpenModal, setIsOpenModal] = useState(false);
+  const [isReading, setIsReading] = useState(false);
   const [peripherals, setPeripherals] = useState<IPeripheral[]>([]);
   const [peripheralsInfo, setPeripheralsInfo] = useState<
     IPeripheralInfo | undefined
@@ -87,14 +88,6 @@ const App = () => {
             });
             setIsOpenModal(true);
           }
-
-          // console.log(
-          //   'Retrieved peripheral services:',
-          //   JSON.stringify(peripheralData.characteristics),
-          // );
-
-          // await BleManager.disconnect(peripheral.id);
-          // handleStartScan();
         } finally {
           return;
         }
@@ -121,34 +114,13 @@ const App = () => {
 
         return;
       }
-
-      // try {
-      //   const peripheralData = await BleManager.retrieveServices(peripheral.id);
-
-      //   console.log(
-      //     'Retrieved peripheral services:',
-      //     JSON.stringify(peripheralData),
-      //   );
-
-      //   // READ THE BATTERY AT MI BAND 5
-      //   const readData = await BleManager.read(
-      //     String(peripheral.id),
-      //     'fee0',
-      //     '00000006-0000-3512-2118-0009af100700',
-      //   );
-
-      //   const buffer = Buffer.Buffer.from(readData); //https://github.com/feross/buffer#convert-arraybuffer-to-buffer
-      //   const sensorData = buffer.readUInt8(1);
-      //   console.log('Read: ' + sensorData);
-      // } catch (err) {
-      //   console.log('Read error:', err);
-      // }
     }
   }, []);
 
   const handleRead = useCallback(
     async (id: string, service: string, characteristic: string) => {
       try {
+        setIsReading(true);
         const peripheralData = await BleManager.retrieveServices(id);
 
         console.log(
@@ -160,14 +132,16 @@ const App = () => {
         const readData = await BleManager.read(id, service, characteristic);
 
         const buffer = Buffer.Buffer.from(readData); //https://github.com/feross/buffer#convert-arraybuffer-to-buffer
-        const sensorData = buffer.readUInt8(1);
-        console.log('Read: ' + sensorData);
 
-        Alert.alert('Success', String(sensorData));
+        Alert.alert(
+          'Success',
+          `Number: ${buffer.readUInt8(1)}\nString: ${buffer.toString()}\n`,
+        );
+
+        setIsReading(false);
       } catch (err) {
-        console.log('Read error:', err);
-
-        Alert.alert('Error', String(err));
+        await BleManager.connect(id);
+        handleRead(id, service, characteristic);
       }
     },
     [],
@@ -321,6 +295,7 @@ const App = () => {
                 return (
                   <TouchableHighlight
                     onPress={() =>
+                      !isReading &&
                       handleRead(
                         peripheralsInfo.id,
                         item.service,
