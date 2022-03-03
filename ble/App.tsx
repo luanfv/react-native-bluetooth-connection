@@ -7,6 +7,7 @@ import {
   Platform,
   PermissionsAndroid,
   Alert,
+  StyleSheet,
 } from 'react-native';
 import Buffer from 'buffer';
 import BleManager, {Peripheral} from 'react-native-ble-manager';
@@ -222,7 +223,7 @@ const App = () => {
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
-      <SafeAreaView>
+      <SafeAreaView style={styles.container}>
         {type === 'peripherals' && (
           <PeripheralList
             isScanning={isScanning}
@@ -244,11 +245,18 @@ const App = () => {
             }}
           />
         )}
-      </SafeAreaView>
 
-      {type === 'loading' && <Loading />}
+        {type === 'loading' && <Loading />}
+      </SafeAreaView>
     </>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: '#eee',
+    flex: 1,
+  },
+});
 
 export default App;

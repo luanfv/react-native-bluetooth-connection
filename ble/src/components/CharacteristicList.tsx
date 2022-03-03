@@ -24,24 +24,31 @@ const CharacteristicList: React.FC<ICharacteristicList> = ({
 }) => {
   return (
     <View style={styles.body}>
-      <View style={styles.buttonContainer}>
-        <Button title="back to home" onPress={onClose} />
-      </View>
-
-      {!peripheralsInfo ||
-        (peripheralsInfo.characteristics.length === 0 && (
-          <View style={styles.voidList}>
-            <Text style={styles.voidListText}>No characteristics</Text>
-          </View>
-        ))}
-
-      <View style={styles.separator} />
-
       {peripheralsInfo && (
         <FlatList
           data={peripheralsInfo.characteristics}
           keyExtractor={(_, index) => String(index)}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
+          ListHeaderComponent={() => {
+            return (
+              <>
+                <View style={styles.buttonContainer}>
+                  <Button title="back to home" onPress={onClose} />
+                </View>
+
+                {!peripheralsInfo ||
+                  (peripheralsInfo.characteristics.length === 0 && (
+                    <View style={styles.voidList}>
+                      <Text style={styles.voidListText}>
+                        No characteristics
+                      </Text>
+                    </View>
+                  ))}
+
+                <View style={styles.separator} />
+              </>
+            );
+          }}
           renderItem={({item}) => {
             return (
               <TouchableHighlight
@@ -61,6 +68,7 @@ const CharacteristicList: React.FC<ICharacteristicList> = ({
               </TouchableHighlight>
             );
           }}
+          ListFooterComponent={() => <View style={styles.marginBottom} />}
         />
       )}
     </View>
@@ -70,9 +78,6 @@ const CharacteristicList: React.FC<ICharacteristicList> = ({
 const styles = StyleSheet.create({
   body: {
     backgroundColor: '#fff',
-    marginVertical: 10,
-    borderBottomWidth: 2,
-    borderBottomColor: '#eee',
   },
   buttonContainer: {
     margin: 10,
@@ -109,6 +114,9 @@ const styles = StyleSheet.create({
     marginVertical: 12,
     borderWidth: 1,
     borderColor: '#eee',
+  },
+  marginBottom: {
+    marginBottom: 40,
   },
 });
 

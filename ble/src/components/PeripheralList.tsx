@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   StyleSheet,
-  ScrollView,
   View,
   Text,
   Button,
@@ -27,35 +26,34 @@ const PeripheralList: React.FC<IPeripheralList> = ({
 }) => {
   return (
     <>
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={styles.scrollView}>
-        <View style={styles.body}>
-          <View style={styles.buttonContainer}>
-            <Button
-              title={'Scan Bluetooth (' + (isScanning ? 'on' : 'off') + ')'}
-              onPress={() => !isScanning && onStartScan()}
-            />
-          </View>
-
-          <View style={styles.buttonContainer}>
-            <Button
-              title="Retrieve connected peripherals"
-              onPress={() => onRetrieveConnected()}
-            />
-          </View>
-
-          {peripherals.length === 0 && (
-            <View style={styles.voidList}>
-              <Text style={styles.voidListText}>No peripherals</Text>
-            </View>
-          )}
-        </View>
-      </ScrollView>
-
       <FlatList
         data={peripherals}
         keyExtractor={(item) => item.id}
+        ListHeaderComponent={() => {
+          return (
+            <View style={styles.body}>
+              <View style={styles.buttonContainer}>
+                <Button
+                  title={'Scan Bluetooth (' + (isScanning ? 'on' : 'off') + ')'}
+                  onPress={() => !isScanning && onStartScan()}
+                />
+              </View>
+
+              <View style={styles.buttonContainer}>
+                <Button
+                  title="Retrieve connected peripherals"
+                  onPress={() => onRetrieveConnected()}
+                />
+              </View>
+
+              {peripherals.length === 0 && (
+                <View style={styles.voidList}>
+                  <Text style={styles.voidListText}>No peripherals</Text>
+                </View>
+              )}
+            </View>
+          );
+        }}
         renderItem={({item}) => {
           return (
             <TouchableHighlight onPress={() => onPeripheral(item)}>
@@ -90,15 +88,13 @@ const PeripheralList: React.FC<IPeripheralList> = ({
             </TouchableHighlight>
           );
         }}
+        ListFooterComponent={() => <View style={styles.marginBottom} />}
       />
     </>
   );
 };
 
 const styles = StyleSheet.create({
-  scrollView: {
-    backgroundColor: '#eee',
-  },
   body: {
     backgroundColor: '#fff',
   },
@@ -139,6 +135,9 @@ const styles = StyleSheet.create({
   },
   backgroundGreen: {
     backgroundColor: '#04b404',
+  },
+  marginBottom: {
+    marginBottom: 40,
   },
 });
 
