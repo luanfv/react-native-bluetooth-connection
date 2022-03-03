@@ -14,7 +14,7 @@ interface ICharacteristicList {
   isOpenModal: boolean;
   isReading: boolean;
   peripheralsInfo: IPeripheralInfo | undefined;
-  setIsOpenModal: (status: boolean) => void;
+  onClose: () => void;
   onRead: (id: string, service: string, characteristic: string) => void;
 }
 
@@ -22,14 +22,12 @@ const CharacteristicList: React.FC<ICharacteristicList> = ({
   isOpenModal,
   isReading,
   peripheralsInfo,
-  setIsOpenModal,
+  onClose,
   onRead,
 }) => {
   return (
-    <Modal
-      isVisible={isOpenModal}
-      onBackButtonPress={() => setIsOpenModal(false)}>
-      <Button title="close" onPress={() => setIsOpenModal(false)} />
+    <Modal isVisible={isOpenModal} onBackButtonPress={onClose}>
+      <Button title="close" onPress={onClose} />
 
       <View style={styles.modal}>
         {peripheralsInfo && (

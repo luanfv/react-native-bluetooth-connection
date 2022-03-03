@@ -26,13 +26,17 @@ export interface IPeripheralInfo {
   }[];
 }
 
+type IType = 'peripherals' | 'characteristics';
+
 const BleManagerModule = NativeModules.BleManager;
 const bleManagerEmitter = new NativeEventEmitter(BleManagerModule);
 
 const App = () => {
   const [isScanning, setIsScanning] = useState(false);
-  const [isOpenModal, setIsOpenModal] = useState(false);
   const [isReading, setIsReading] = useState(false);
+
+  const [type, setType] = useState<IType>('peripherals');
+
   const [peripherals, setPeripherals] = useState<IPeripheral[]>([]);
   const [peripheralsInfo, setPeripheralsInfo] = useState<
     IPeripheralInfo | undefined
@@ -80,7 +84,8 @@ const App = () => {
               id: peripheralData.id,
               characteristics: characteristics,
             });
-            setIsOpenModal(true);
+
+            setType('characteristics');
           }
         } finally {
           return;
@@ -209,11 +214,11 @@ const App = () => {
         />
 
         <CharacteristicList
-          isOpenModal={isOpenModal}
+          isOpenModal={type === 'characteristics'}
           isReading={isReading}
           peripheralsInfo={peripheralsInfo}
           onRead={handleRead}
-          setIsOpenModal={setIsOpenModal}
+          onClose={() => setType('peripherals')}
         />
       </SafeAreaView>
     </>
