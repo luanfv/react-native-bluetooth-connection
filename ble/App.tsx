@@ -11,7 +11,7 @@ import {
 import Buffer from 'buffer';
 import BleManager, {Peripheral} from 'react-native-ble-manager';
 
-import {PeripheralList, CharacteristicList} from './src/components';
+import {PeripheralList, CharacteristicList, Loading} from './src/components';
 
 export interface IPeripheral extends Peripheral {
   isConnected?: boolean;
@@ -26,7 +26,7 @@ export interface IPeripheralInfo {
   }[];
 }
 
-type IType = 'peripherals' | 'characteristics';
+type IType = 'peripherals' | 'characteristics' | 'loading';
 
 const BleManagerModule = NativeModules.BleManager;
 const bleManagerEmitter = new NativeEventEmitter(BleManagerModule);
@@ -43,12 +43,10 @@ const App = () => {
   >(undefined);
 
   const handleStartScan = useCallback(() => {
-    if (!isScanning) {
-      BleManager.scan([], 5, true).then(() => {
-        setIsScanning(true);
-      });
-    }
-  }, [isScanning]);
+    BleManager.scan([], 5, true).then(() => {
+      setIsScanning(true);
+    });
+  }, []);
 
   const handleRetrieveConnected = useCallback(() => {
     BleManager.getConnectedPeripherals([]).then((results) => {
@@ -61,10 +59,28 @@ const App = () => {
     });
   }, []);
 
-  const handlePeripheral = useCallback(async (peripheral: IPeripheral) => {
-    if (peripheral) {
-      if (peripheral.isConnected) {
+  const handlePeripheral = useCallback(
+    async (peripheral: IPeripheral) => {
+      if (peripheral) {
+        setType('loading');
+
         try {
+          await BleManager.connect(peripheral.id);
+
+          setPeripherals((oldState) => {
+            const peripheralConnected = {
+              ...peripheral,
+              isConnected: true,
+            };
+            const peripheralsDisconnected = oldState.filter((item) => {
+              if (item.id !== peripheral.id) {
+                return item;
+              }
+            });
+
+            return [peripheralConnected, ...peripheralsDisconnected];
+          });
+
           const peripheralData = await BleManager.retrieveServices(
             peripheral.id,
           );
@@ -87,34 +103,21 @@ const App = () => {
 
             setType('characteristics');
           }
-        } finally {
-          return;
+        } catch (err) {
+          console.log('Connect error:', err);
+
+          Alert.alert(
+            'Error',
+            `Could not connect to device ${peripheral.name}`,
+          );
+
+          handleStartScan();
+          setType('peripherals');
         }
       }
-
-      try {
-        await BleManager.connect(peripheral.id);
-
-        setPeripherals((oldState) => {
-          const peripheralConnected = {
-            ...peripheral,
-            isConnected: true,
-          };
-          const peripheralsDisconnected = oldState.filter((item) => {
-            if (item.id !== peripheral.id) {
-              return item;
-            }
-          });
-
-          return [peripheralConnected, ...peripheralsDisconnected];
-        });
-      } catch (err) {
-        console.log('Connect error:', err);
-
-        return;
-      }
-    }
-  }, []);
+    },
+    [handleStartScan],
+  );
 
   const handleRead = useCallback(
     async (id: string, service: string, characteristic: string) => {
@@ -205,22 +208,27 @@ const App = () => {
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
       <SafeAreaView>
-        <PeripheralList
-          isScanning={isScanning}
-          peripherals={peripherals}
-          onPeripheral={handlePeripheral}
-          onRetrieveConnected={handleRetrieveConnected}
-          onStartScan={handleStartScan}
-        />
+        {type === 'peripherals' && (
+          <PeripheralList
+            isScanning={isScanning}
+            peripherals={peripherals}
+            onPeripheral={handlePeripheral}
+            onRetrieveConnected={handleRetrieveConnected}
+            onStartScan={handleStartScan}
+          />
+        )}
 
-        <CharacteristicList
-          isOpenModal={type === 'characteristics'}
-          isReading={isReading}
-          peripheralsInfo={peripheralsInfo}
-          onRead={handleRead}
-          onClose={() => setType('peripherals')}
-        />
+        {type === 'characteristics' && (
+          <CharacteristicList
+            isReading={isReading}
+            peripheralsInfo={peripheralsInfo}
+            onRead={handleRead}
+            onClose={() => setType('peripherals')}
+          />
+        )}
       </SafeAreaView>
+
+      {type === 'loading' && <Loading />}
     </>
   );
 };

@@ -7,11 +7,9 @@ import {
   FlatList,
   TouchableHighlight,
 } from 'react-native';
-import Modal from 'react-native-modal';
 import {IPeripheralInfo} from '../../App';
 
 interface ICharacteristicList {
-  isOpenModal: boolean;
   isReading: boolean;
   peripheralsInfo: IPeripheralInfo | undefined;
   onClose: () => void;
@@ -19,55 +17,72 @@ interface ICharacteristicList {
 }
 
 const CharacteristicList: React.FC<ICharacteristicList> = ({
-  isOpenModal,
   isReading,
   peripheralsInfo,
   onClose,
   onRead,
 }) => {
   return (
-    <Modal isVisible={isOpenModal} onBackButtonPress={onClose}>
-      <Button title="close" onPress={onClose} />
-
-      <View style={styles.modal}>
-        {peripheralsInfo && (
-          <FlatList
-            data={peripheralsInfo.characteristics}
-            keyExtractor={(_, index) => String(index)}
-            ItemSeparatorComponent={() => <View style={styles.separator} />}
-            renderItem={({item}) => {
-              return (
-                <TouchableHighlight
-                  onPress={() =>
-                    !isReading &&
-                    onRead(
-                      peripheralsInfo.id,
-                      item.service,
-                      item.characteristic,
-                    )
-                  }>
-                  <View style={styles.backgroundWhite}>
-                    <Text style={styles.textLarge}>
-                      SERVICE: {item.service}
-                    </Text>
-                    <Text style={styles.textLarge}>
-                      CHARACTERISTIC: {item.characteristic}
-                    </Text>
-                    <Text style={styles.textMedium}>
-                      PROPERTIES: {`${item.properties}`}
-                    </Text>
-                  </View>
-                </TouchableHighlight>
-              );
-            }}
-          />
-        )}
+    <View style={styles.body}>
+      <View style={styles.buttonContainer}>
+        <Button title="back to home" onPress={onClose} />
       </View>
-    </Modal>
+
+      {!peripheralsInfo ||
+        (peripheralsInfo.characteristics.length === 0 && (
+          <View style={styles.voidList}>
+            <Text style={styles.voidListText}>No characteristics</Text>
+          </View>
+        ))}
+
+      <View style={styles.separator} />
+
+      {peripheralsInfo && (
+        <FlatList
+          data={peripheralsInfo.characteristics}
+          keyExtractor={(_, index) => String(index)}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          renderItem={({item}) => {
+            return (
+              <TouchableHighlight
+                onPress={() =>
+                  !isReading &&
+                  onRead(peripheralsInfo.id, item.service, item.characteristic)
+                }>
+                <View style={styles.backgroundWhite}>
+                  <Text style={styles.textLarge}>SERVICE: {item.service}</Text>
+                  <Text style={styles.textLarge}>
+                    CHARACTERISTIC: {item.characteristic}
+                  </Text>
+                  <Text style={styles.textMedium}>
+                    PROPERTIES: {`${item.properties}`}
+                  </Text>
+                </View>
+              </TouchableHighlight>
+            );
+          }}
+        />
+      )}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  body: {
+    backgroundColor: '#fff',
+    marginVertical: 10,
+    borderBottomWidth: 2,
+    borderBottomColor: '#eee',
+  },
+  buttonContainer: {
+    margin: 10,
+  },
+  voidList: {
+    margin: 20,
+  },
+  voidListText: {
+    textAlign: 'center',
+  },
   textLarge: {
     fontSize: 12,
     textAlign: 'center',
@@ -89,11 +104,6 @@ const styles = StyleSheet.create({
   },
   backgroundWhite: {
     backgroundColor: '#fff',
-  },
-  modal: {
-    flex: 1,
-    backgroundColor: '#fff',
-    paddingHorizontal: 10,
   },
   separator: {
     marginVertical: 12,
