@@ -26,6 +26,11 @@ export interface IPeripheralInfo {
   }[];
 }
 
+interface IBleManagerDisconnectPeripheral {
+  peripheral: string;
+  status: number;
+}
+
 type IType = 'peripherals' | 'characteristics' | 'loading';
 
 const BleManagerModule = NativeModules.BleManager;
@@ -59,65 +64,54 @@ const App = () => {
     });
   }, []);
 
-  const handlePeripheral = useCallback(
-    async (peripheral: IPeripheral) => {
-      if (peripheral) {
-        setType('loading');
+  const handlePeripheral = useCallback(async (peripheral: IPeripheral) => {
+    if (peripheral) {
+      setType('loading');
 
-        try {
-          await BleManager.connect(peripheral.id);
+      try {
+        await BleManager.connect(peripheral.id);
 
-          setPeripherals((oldState) => {
-            const peripheralConnected = {
-              ...peripheral,
-              isConnected: true,
-            };
-            const peripheralsDisconnected = oldState.filter((item) => {
-              if (item.id !== peripheral.id) {
-                return item;
-              }
-            });
-
-            return [peripheralConnected, ...peripheralsDisconnected];
+        setPeripherals((oldState) => {
+          const peripheralConnected = {
+            ...peripheral,
+            isConnected: true,
+          };
+          const peripheralsDisconnected = oldState.filter((item) => {
+            if (item.id !== peripheral.id) {
+              return item;
+            }
           });
 
-          const peripheralData = await BleManager.retrieveServices(
-            peripheral.id,
-          );
+          return [peripheralConnected, ...peripheralsDisconnected];
+        });
 
-          const characteristics = peripheralData.characteristics?.map(
-            (item) => {
-              return {
-                service: item.service,
-                characteristic: item.characteristic,
-                properties: Object.keys(item.properties),
-              };
-            },
-          );
+        const peripheralData = await BleManager.retrieveServices(peripheral.id);
 
-          if (Array.isArray(characteristics)) {
-            setPeripheralsInfo({
-              id: peripheralData.id,
-              characteristics: characteristics,
-            });
+        const characteristics = peripheralData.characteristics?.map((item) => {
+          return {
+            service: item.service,
+            characteristic: item.characteristic,
+            properties: Object.keys(item.properties),
+          };
+        });
 
-            setType('characteristics');
-          }
-        } catch (err) {
-          console.log('Connect error:', err);
+        if (Array.isArray(characteristics)) {
+          setPeripheralsInfo({
+            id: peripheralData.id,
+            characteristics: characteristics,
+          });
 
-          Alert.alert(
-            'Error',
-            `Could not connect to device ${peripheral.name}`,
-          );
-
-          handleStartScan();
-          setType('peripherals');
+          setType('characteristics');
         }
+      } catch (err) {
+        console.log('Connect error:', err);
+
+        Alert.alert('Error', `Could not connect to device ${peripheral.name}`);
+
+        setType('peripherals');
       }
-    },
-    [handleStartScan],
-  );
+    }
+  }, []);
 
   const handleRead = useCallback(
     async (id: string, service: string, characteristic: string) => {
@@ -185,6 +179,26 @@ const App = () => {
       setIsScanning(false),
     );
 
+    bleManagerEmitter.addListener(
+      'BleManagerDisconnectPeripheral',
+      (data: IBleManagerDisconnectPeripheral) => {
+        setPeripherals((oldState) => {
+          const newState = oldState.map((state) => {
+            if (state.id === data.peripheral) {
+              return {
+                ...state,
+                isConnected: false,
+              };
+            }
+
+            return state;
+          });
+
+          return newState;
+        });
+      },
+    );
+
     if (Platform.OS === 'android' && Platform.Version >= 23) {
       PermissionsAndroid.check(
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
@@ -200,6 +214,7 @@ const App = () => {
     return () => {
       bleManagerEmitter.removeAllListeners('BleManagerDiscoverPeripheral');
       bleManagerEmitter.removeAllListeners('BleManagerStopScan');
+      bleManagerEmitter.removeAllListeners('BleManagerDisconnectPeripheral');
     };
   }, []);
 
@@ -223,7 +238,10 @@ const App = () => {
             isReading={isReading}
             peripheralsInfo={peripheralsInfo}
             onRead={handleRead}
-            onClose={() => setType('peripherals')}
+            onClose={() => {
+              setType('peripherals');
+              handleStartScan();
+            }}
           />
         )}
       </SafeAreaView>
