@@ -203,7 +203,7 @@ const App = () => {
 
   return (
     <>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
       <SafeAreaView>
         <ScrollView
@@ -277,20 +277,12 @@ const App = () => {
         onBackButtonPress={() => setIsOpenModal(false)}>
         <Button title="close" onPress={() => setIsOpenModal(false)} />
 
-        <View style={{flex: 1, backgroundColor: '#fff', paddingHorizontal: 10}}>
+        <View style={styles.modal}>
           {peripheralsInfo && (
             <FlatList
               data={peripheralsInfo.characteristics}
               keyExtractor={(_, index) => String(index)}
-              ItemSeparatorComponent={() => (
-                <View
-                  style={{
-                    marginVertical: 12,
-                    borderWidth: 1,
-                    borderColor: '#eee',
-                  }}
-                />
-              )}
+              ItemSeparatorComponent={() => <View style={styles.separator} />}
               renderItem={({item}) => {
                 return (
                   <TouchableHighlight
@@ -368,6 +360,16 @@ const styles = StyleSheet.create({
   },
   backgroundGreen: {
     backgroundColor: '#04b404',
+  },
+  modal: {
+    flex: 1,
+    backgroundColor: '#fff',
+    paddingHorizontal: 10,
+  },
+  separator: {
+    marginVertical: 12,
+    borderWidth: 1,
+    borderColor: '#eee',
   },
 });
 
