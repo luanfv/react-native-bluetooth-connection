@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   SafeAreaView,
   StatusBar,
@@ -10,9 +10,9 @@ import {
   StyleSheet,
 } from 'react-native';
 import Buffer from 'buffer';
-import BleManager, {Peripheral} from 'react-native-ble-manager';
+import BleManager, { Peripheral } from 'react-native-ble-manager';
 
-import {PeripheralList, CharacteristicList, Loading} from './src/components';
+import { PeripheralList, CharacteristicList, Loading } from './src/components';
 
 export interface IPeripheral extends Peripheral {
   isConnected?: boolean;
@@ -57,7 +57,7 @@ const App = () => {
   const handleRetrieveConnected = useCallback(() => {
     BleManager.getConnectedPeripherals([]).then((results) => {
       const peripheralsUpdated = results.map((item) => {
-        const updated = {...item, isConnected: true};
+        const updated = { ...item, isConnected: true };
         return updated;
       });
 
@@ -145,7 +145,7 @@ const App = () => {
   );
 
   useEffect(() => {
-    BleManager.start({showAlert: false});
+    BleManager.start({ showAlert: false });
 
     bleManagerEmitter.addListener(
       'BleManagerDiscoverPeripheral',
@@ -157,7 +157,7 @@ const App = () => {
         }
 
         setPeripherals((oldState) => {
-          const idFound = oldState.find(({id}) => id === peripheral.id);
+          const idFound = oldState.find(({ id }) => id === peripheral.id);
 
           if (!idFound) {
             return [...oldState, peripheral];

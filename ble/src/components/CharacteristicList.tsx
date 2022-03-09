@@ -7,7 +7,7 @@ import {
   FlatList,
   TouchableHighlight,
 } from 'react-native';
-import {IPeripheralInfo} from '../../App';
+import { IPeripheralInfo } from '../../App';
 
 interface ICharacteristicList {
   isReading: boolean;
@@ -49,13 +49,14 @@ const CharacteristicList: React.FC<ICharacteristicList> = ({
               </>
             );
           }}
-          renderItem={({item}) => {
+          renderItem={({ item }) => {
             return (
               <TouchableHighlight
                 onPress={() =>
                   !isReading &&
                   onRead(peripheralsInfo.id, item.service, item.characteristic)
-                }>
+                }
+              >
                 <View style={styles.backgroundWhite}>
                   <Text style={styles.textLarge}>SERVICE: {item.service}</Text>
                   <Text style={styles.textLarge}>
@@ -120,4 +121,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export {CharacteristicList};
+export { CharacteristicList };

@@ -7,7 +7,7 @@ import {
   FlatList,
   TouchableHighlight,
 } from 'react-native';
-import {IPeripheral} from '../../App';
+import { IPeripheral } from '../../App';
 
 interface IPeripheralList {
   isScanning: boolean;
@@ -54,7 +54,7 @@ const PeripheralList: React.FC<IPeripheralList> = ({
             </View>
           );
         }}
-        renderItem={({item}) => {
+        renderItem={({ item }) => {
           return (
             <TouchableHighlight onPress={() => onPeripheral(item)}>
               <View
@@ -62,26 +62,30 @@ const PeripheralList: React.FC<IPeripheralList> = ({
                   item.isConnected
                     ? styles.backgroundGreen
                     : styles.backgroundWhite
-                }>
+                }
+              >
                 <Text
                   style={[
                     styles.textLarge,
                     item.isConnected && styles.colorWhite,
-                  ]}>
+                  ]}
+                >
                   {item.name}
                 </Text>
                 <Text
                   style={[
                     styles.textMedium,
                     item.isConnected && styles.colorWhite,
-                  ]}>
+                  ]}
+                >
                   RSSI: {item.rssi}
                 </Text>
                 <Text
                   style={[
                     styles.textSmall,
                     item.isConnected && styles.colorWhite,
-                  ]}>
+                  ]}
+                >
                   {item.id}
                 </Text>
               </View>
@@ -141,4 +145,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export {PeripheralList};
+export { PeripheralList };

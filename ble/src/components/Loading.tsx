@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, ActivityIndicator, StyleSheet} from 'react-native';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 
 const Loading: React.FC = () => {
   return (
@@ -18,4 +18,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export {Loading};
+export { Loading };
