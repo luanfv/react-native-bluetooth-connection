@@ -45,6 +45,7 @@ const App: React.FC = () => {
           const idConnected = deviceConnected.id;
 
           await deviceConnected.disconnect();
+          setDeviceConnected(undefined);
 
           if (idConnected === id) {
             return;
@@ -98,8 +99,25 @@ const App: React.FC = () => {
             <TouchableOpacity
               onPress={() => handleTogglConnectToDevice(item.id)}
               activeOpacity={0.7}
+              style={{
+                padding: 20,
+                marginVertical: 10,
+                backgroundColor:
+                  deviceConnected && item.id === deviceConnected.id
+                    ? 'green'
+                    : 'white',
+              }}
             >
-              <Text>{item.name}</Text>
+              <Text
+                style={{
+                  color:
+                    deviceConnected && item.id === deviceConnected.id
+                      ? 'white'
+                      : 'black',
+                }}
+              >
+                {item.name}
+              </Text>
             </TouchableOpacity>
           );
         }}
