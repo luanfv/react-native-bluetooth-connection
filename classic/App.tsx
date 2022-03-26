@@ -6,6 +6,8 @@ import {
   PermissionsAndroid,
   FlatList,
   Alert,
+  TouchableOpacity,
+  Button,
 } from 'react-native';
 import RNBluetoothClassic, {
   BluetoothDevice,
@@ -13,8 +15,11 @@ import RNBluetoothClassic, {
 
 const App: React.FC = () => {
   const [devices, setDevices] = useState<BluetoothDevice[]>([]);
+  const [deviceConnected, setDeviceConnected] = useState<
+    BluetoothDevice | undefined
+  >(undefined);
 
-  const getBondedDevices = useCallback(async () => {
+  const handleGetBondedDevices = useCallback(async () => {
     try {
       const peripherals = await RNBluetoothClassic.getBondedDevices();
 
@@ -29,9 +34,33 @@ const App: React.FC = () => {
         'Could not find any paired connections with your device',
       );
 
-      console.log('Error:', err);
+      console.log('handleGetBondedDevices error:', err);
     }
   }, []);
+
+  const handleTogglConnectToDevice = useCallback(
+    async (id: string) => {
+      try {
+        if (deviceConnected) {
+          const idConnected = deviceConnected.id;
+
+          await deviceConnected.disconnect();
+
+          if (idConnected === id) {
+            return;
+          }
+        }
+
+        const device = await RNBluetoothClassic.connectToDevice(id);
+        setDeviceConnected(device);
+      } catch (err) {
+        Alert.alert('Error', `Unable to connect to device "${id}"`);
+
+        console.log('handleTogglConnectToDevice error:', err);
+      }
+    },
+    [deviceConnected],
+  );
 
   useEffect(() => {
     if (Platform.OS === 'android' && Platform.Version >= 23) {
@@ -48,21 +77,30 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    getBondedDevices();
-  }, [getBondedDevices]);
+    const listener = RNBluetoothClassic.onDeviceDisconnected(() => {
+      setDeviceConnected(undefined);
+    });
+
+    return () => listener.remove();
+  }, []);
 
   return (
     <View>
       <Text>React Native Bluetooth Classic</Text>
+
+      <Button title="Get Bonded Devices" onPress={handleGetBondedDevices} />
 
       <FlatList
         data={devices}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => {
           return (
-            <View>
+            <TouchableOpacity
+              onPress={() => handleTogglConnectToDevice(item.id)}
+              activeOpacity={0.7}
+            >
               <Text>{item.name}</Text>
-            </View>
+            </TouchableOpacity>
           );
         }}
       />
