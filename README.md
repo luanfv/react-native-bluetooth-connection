@@ -13,3 +13,11 @@ Antes de utilizar o BLE você precisa ficar ciente de que ele é feito para comu
 Para saber mais sobre, [clique aqui](https://learn.adafruit.com/introduction-to-bluetooth-low-energy).
 
 [Exemplo de código](https://github.com/luanfv/react-native-bluetooth-connection/tree/master/ble)
+
+## Bluetooth Classic
+
+Protocolo de comunicação bluetooth que possui um alto custo de energia por conta da sua comunicação constante, muito utilizado em caixas de som, onde o tráfego de informações é alto, além disso, esse protocolo permite transmitir dados muito mais pesados que o BLE. Para estabelecer comunicação entre dispositivos por esse protocolo basta fazer uma conexão única, sua maneira de interação lembra um pouco com as de API Rest, você deve passar um valor através da escrita, `write`, e ele guardará a resposta em um local (caso haja resposta), para pegá-la basta realizar uma leitura, `read`, ou criar um `listener` para ficar cuidando esse local. **Obs: valores que devem ser recebidos e retornados devem ser desenvolvidos pelo responsável do aparelho, não o desenvolvedor mobile.**
+
+Antes de utilizar o Bluetooth Classic você precisa ficar ciente de que ele é feito para comunicações constantes, por conta disso ele consome muita energia de ambos os dispositivos, então se seu projeto tiver pouco tráfego de dados, talvez essa não seja a melhor opção.
+
+[Exemplo de código](https://github.com/luanfv/react-native-bluetooth-connection/tree/master/classic)
