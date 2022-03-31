@@ -20,4 +20,6 @@ Protocolo de comunicação bluetooth que possui um alto custo de energia por con
 
 Antes de utilizar o Bluetooth Classic você precisa ficar ciente de que ele é feito para comunicações constantes, por conta disso ele consome muita energia de ambos os dispositivos, então se seu projeto tiver pouco tráfego de dados, talvez essa não seja a melhor opção.
 
+**DETALHE IMPORTANTE:** Para utilizar o Bluetooth Classic no iOS **é necessário estar por dentro do protocolo de [MFi](https://mfi.apple.com/faqs) da apple**, ela exige que o dispositivo esteja cadastrado.
+
 [Exemplo de código](https://github.com/luanfv/react-native-bluetooth-connection/tree/master/classic)
